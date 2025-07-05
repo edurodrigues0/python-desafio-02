@@ -42,3 +42,13 @@ def get_diets():
   diets = Diet.query.filter(Diet.user_id == user.id).all()
 
   return jsonify([diet.to_dict() for diet in diets]), 200
+
+@diet_bp.route('/<int:diet_id>', methods=['GET'])
+@login_required
+def get_diet(diet_id):
+  diet = Diet.query.get_or_404(diet_id)
+
+  if diet.user_id != current_user.id:
+    return jsonify({'error': 'Unauthorized access'}), 403
+
+  return jsonify(diet.to_dict()), 200
