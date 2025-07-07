@@ -77,15 +77,25 @@ def update_diet(diet_id):
   on_diet = data.get('on_diet')
   date_hour = data.get('date_hour')
 
+  print('Received data for update:', data)
+
   diet = Diet.query.get_or_404(diet_id)
 
   if diet.user_id != current_user.id:
     return jsonify({'error': 'Unauthorized access'}), 403
 
-  diet.name = name if name else diet.name
-  diet.description = description if description else diet.description
-  diet.on_diet = on_diet if on_diet is not None else diet.on
-  diet.date_hour = datetime.fromisoformat(date_hour) if date_hour else diet.date_hour
+  if name is not None:
+    diet.name = name
+  if description is not None:
+    diet.description = description
+  if on_diet is not None:
+    diet.on_diet = on_diet
+  if date_hour is not None:
+    try:
+      diet.date_hour = datetime.fromisoformat(date_hour)
+    except (TypeError, ValueError):
+      return jsonify({'error': 'Invalid date format, use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
+    
   db.session.commit()
 
   return jsonify({'message': f'Diet {diet.name} updated successfully'})
