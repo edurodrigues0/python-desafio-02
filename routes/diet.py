@@ -52,3 +52,38 @@ def get_diet(diet_id):
     return jsonify({'error': 'Unauthorized access'}), 403
 
   return jsonify(diet.to_dict()), 200
+
+@diet_bp.route('/<int:diet_id>', methods=['PUT'])
+@login_required
+def update_diet(diet_id):
+  data = request.json
+  name = data.get('name')
+  description = data.get('description')
+  on_diet = data.get('on_diet')
+  date_hour = data.get('date_hour')
+
+  diet = Diet.query.get_or_404(diet_id)
+
+  if diet.user_id != current_user.id:
+    return jsonify({'error': 'Unauthorized access'}), 403
+
+  diet.name = name if name else diet.name
+  diet.description = description if description else diet.description
+  diet.on_diet = on_diet if on_diet is not None else diet.on
+  diet.date_hour = datetime.fromisoformat(date_hour) if date_hour else diet.date_hour
+  db.session.commit()
+
+  return jsonify({'message': f'Diet {diet.name} updated successfully'})
+
+@diet_bp.route('/<int:diet_id>', methods=['DELETE'])
+@login_required
+def delete_diet(diet_id):
+  diet = Diet.query.get_or_404(diet_id)
+
+  if diet.user_id != current_user.id:
+    return jsonify({'error': 'Unauthorized access'}), 403
+  
+  db.session.delete(diet)
+  db.session.commit()
+
+  return jsonify({'message': f'Diet {diet.name} deleted successfully'}), 200
